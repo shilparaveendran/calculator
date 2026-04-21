@@ -2,12 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:get_storage/get_storage.dart';
 
 import '../models/calc_history_entry.dart';
 
 class CalculatorController extends GetxController {
-  CalculatorController(this._prefs) {
+  CalculatorController() {
     _loadPersistedState();
   }
 
@@ -15,7 +15,7 @@ class CalculatorController extends GetxController {
   static const String _historyKey = 'history';
   static const String _darkModeKey = 'darkMode';
 
-  final SharedPreferences _prefs;
+  final GetStorage _storage = GetStorage();
   final RxString expression = '0'.obs;
   final RxString displayValue = '0'.obs;
   final RxInt precision = 2.obs;
@@ -43,7 +43,8 @@ class CalculatorController extends GetxController {
           offset: const Offset(0, 4),
         ),
       ],
-      icon: const Icon(Icons.info_outline_rounded, color: Colors.white, size: 22),
+      icon:
+          const Icon(Icons.info_outline_rounded, color: Colors.white, size: 22),
     );
   }
 
@@ -96,7 +97,8 @@ class CalculatorController extends GetxController {
       return;
     }
     if (_endsWithOperator(expression.value)) {
-      _snackbar('Invalid expression', 'Expression cannot end with an operator.');
+      _snackbar(
+          'Invalid expression', 'Expression cannot end with an operator.');
       return;
     }
 
@@ -115,13 +117,13 @@ class CalculatorController extends GetxController {
 
   void updatePrecision(int decimals) {
     precision.value = decimals;
-    _prefs.setInt(_precisionKey, decimals);
+    _storage.write(_precisionKey, decimals);
     _syncPreview();
   }
 
   void toggleTheme() {
     isDarkMode.value = !isDarkMode.value;
-    _prefs.setBool(_darkModeKey, isDarkMode.value);
+    _storage.write(_darkModeKey, isDarkMode.value);
     Get.changeThemeMode(isDarkMode.value ? ThemeMode.dark : ThemeMode.light);
   }
 
@@ -160,112 +162,112 @@ class CalculatorController extends GetxController {
       SizedBox(
         height: Get.height * 0.72,
         child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-        decoration: BoxDecoration(
-          color: Get.theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.12),
-              blurRadius: 24,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Get.theme.colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          decoration: BoxDecoration(
+            color: Get.theme.colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 24,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Get.theme.colorScheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ),
-            Row(
-              children: [
-                Text('History', style: Get.textTheme.titleLarge),
-                const Spacer(),
-                TextButton.icon(
-                  onPressed: clearHistory,
-                  icon: const Icon(Icons.delete_outline_rounded, size: 20),
-                  label: const Text('Clear'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: Obx(() {
-                if (historyEntries.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'No calculations yet',
-                      style: Get.textTheme.bodyLarge?.copyWith(
-                        color: Get.theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  );
-                }
-                final List<Widget> tiles = <Widget>[];
-                String? lastLabel;
-                for (final CalcHistoryEntry entry in historyEntries) {
-                  final String label = historySectionLabel(entry.at);
-                  if (label != lastLabel) {
-                    if (tiles.isNotEmpty) {
-                      tiles.add(const SizedBox(height: 20));
-                    }
-                    tiles.add(
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Text(
-                          label,
-                          style: Get.textTheme.titleSmall?.copyWith(
-                            color: Get.theme.colorScheme.primary,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.3,
-                          ),
+              Row(
+                children: [
+                  Text('History', style: Get.textTheme.titleLarge),
+                  const Spacer(),
+                  TextButton.icon(
+                    onPressed: clearHistory,
+                    icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                    label: const Text('Clear'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: Obx(() {
+                  if (historyEntries.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'No calculations yet',
+                        style: Get.textTheme.bodyLarge?.copyWith(
+                          color: Get.theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     );
-                    lastLabel = label;
                   }
-                  tiles.add(
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Get.theme.colorScheme.surfaceContainerHighest
-                            .withValues(alpha: 0.65),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: Get.theme.colorScheme.outlineVariant
-                              .withValues(alpha: 0.5),
+                  final List<Widget> tiles = <Widget>[];
+                  String? lastLabel;
+                  for (final CalcHistoryEntry entry in historyEntries) {
+                    final String label = historySectionLabel(entry.at);
+                    if (label != lastLabel) {
+                      if (tiles.isNotEmpty) {
+                        tiles.add(const SizedBox(height: 20));
+                      }
+                      tiles.add(
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            label,
+                            style: Get.textTheme.titleSmall?.copyWith(
+                              color: Get.theme.colorScheme.primary,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
+                      );
+                      lastLabel = label;
+                    }
+                    tiles.add(
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Get.theme.colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.65),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: Get.theme.colorScheme.outlineVariant
+                                .withValues(alpha: 0.5),
+                          ),
+                        ),
+                        child: Text(
+                          entry.text,
+                          style: Get.textTheme.bodyLarge,
+                          softWrap: true,
                         ),
                       ),
-                      child: Text(
-                        entry.text,
-                        style: Get.textTheme.bodyLarge,
-                        softWrap: true,
-                      ),
-                    ),
+                    );
+                  }
+                  return ListView(
+                    padding: EdgeInsets.zero,
+                    children: tiles,
                   );
-                }
-                return ListView(
-                  padding: EdgeInsets.zero,
-                  children: tiles,
-                );
-              }),
-            ),
-          ],
-        ),
+                }),
+              ),
+            ],
+          ),
         ),
       ),
       isScrollControlled: true,
@@ -274,7 +276,7 @@ class CalculatorController extends GetxController {
 
   void clearHistory() {
     historyEntries.clear();
-    _prefs.setString(_historyKey, jsonEncode(<Map<String, dynamic>>[]));
+    _storage.write(_historyKey, jsonEncode(<Map<String, dynamic>>[]));
   }
 
   void _appendDigit(String value) {
@@ -370,8 +372,9 @@ class CalculatorController extends GetxController {
       );
       return;
     }
-    final String last =
-        expression.value.isNotEmpty ? expression.value[expression.value.length - 1] : '';
+    final String last = expression.value.isNotEmpty
+        ? expression.value[expression.value.length - 1]
+        : '';
     if (last == '(') {
       _snackbar('Invalid input', 'Enter a number before an operator.');
       return;
@@ -570,6 +573,13 @@ class CalculatorController extends GetxController {
   }
 
   String _formatNumber(double number) {
+    if (precision.value == 0) {
+      if (number == number.truncateToDouble()) {
+        return number.toInt().toString();
+      }
+      final String raw = number.toStringAsFixed(10);
+      return raw.replaceFirst(RegExp(r'\.?0+$'), '');
+    }
     return number.toStringAsFixed(precision.value);
   }
 
@@ -588,15 +598,15 @@ class CalculatorController extends GetxController {
     final List<Map<String, dynamic>> encoded = historyEntries
         .map((CalcHistoryEntry e) => e.toJson())
         .toList(growable: false);
-    _prefs.setString(_historyKey, jsonEncode(encoded));
+    _storage.write(_historyKey, jsonEncode(encoded));
   }
 
   void _loadPersistedState() {
-    final int? savedPrecision = _prefs.getInt(_precisionKey);
-    final bool? savedTheme = _prefs.getBool(_darkModeKey);
-    final String? savedHistoryJson = _prefs.getString(_historyKey);
+    final int? savedPrecision = _storage.read<int>(_precisionKey);
+    final bool? savedTheme = _storage.read<bool>(_darkModeKey);
+    final String? savedHistoryJson = _storage.read<String>(_historyKey);
 
-    if (savedPrecision != null && [2, 4, 6].contains(savedPrecision)) {
+    if (savedPrecision != null && [0, 2, 4, 6].contains(savedPrecision)) {
       precision.value = savedPrecision;
     }
     if (savedTheme != null) {

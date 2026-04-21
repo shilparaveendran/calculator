@@ -12,7 +12,7 @@ class CalculatorApp extends GetView<CalculatorController> {
   Widget build(BuildContext context) {
     return Obx(
       () => GetMaterialApp(
-        title: 'Professional Calculator',
+        title: 'Calculator',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,

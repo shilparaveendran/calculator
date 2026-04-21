@@ -56,6 +56,7 @@ class CalculatorView extends GetView<CalculatorController> {
             icon: const Icon(Icons.tune),
             onSelected: controller.updatePrecision,
             itemBuilder: (_) => const [
+              PopupMenuItem(value: 0, child: Text('No precision')),
               PopupMenuItem(value: 2, child: Text('2 decimals')),
               PopupMenuItem(value: 4, child: Text('4 decimals')),
               PopupMenuItem(value: 6, child: Text('6 decimals')),
@@ -104,7 +105,9 @@ class CalculatorView extends GetView<CalculatorController> {
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
-                          'Precision: ${controller.precision.value}',
+                          controller.precision.value == 0
+                              ? 'Precision: No precision'
+                              : 'Precision: ${controller.precision.value}',
                           style:
                               Theme.of(context).textTheme.labelLarge?.copyWith(
                                     color: _navyBlue,
